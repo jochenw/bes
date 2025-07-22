@@ -1,0 +1,7 @@
+USE bes;
+CREATE SEQUENCE IF NOT EXISTS besFilesContentSeq AS BIGINT;
+CREATE TABLE besFilesContent (
+	id BIGINT NOT NULL PRIMARY KEY,
+    size BIGINT NOT NULL,
+    content LONGBLOB NOT NULL
+);
