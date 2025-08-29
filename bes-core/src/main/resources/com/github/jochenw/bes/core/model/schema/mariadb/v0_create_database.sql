@@ -1,0 +1,7 @@
+-- Create the database
+DROP DATABASE bes;
+CREATE DATABASE IF NOT EXISTS bes CHARACTER SET = 'UTF8';
+DROP USER IF EXISTS 'bes'@'localhost';
+CREATE USER 'bes'@'localhost' IDENTIFIED BY 'bes';
+GRANT ALL PRIVILEGES ON bes.* TO 'bes'@'localhost';
+FLUSH PRIVILEGES;

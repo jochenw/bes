@@ -11,15 +11,15 @@ public class BesJob extends BesBean<BesJob.Id> {
 		}
 	}
 
-	private BesUser.Id owner;
+	private BesUser.Id ownerId;
 	private String name;
 
 	public BesJob(Id pId) {
 		super(pId);
 	}
 
-	public BesUser.Id getOwner() { return owner; }
-	public void setOwner(BesUser.Id pOwner) { owner = pOwner; }
+	public BesUser.Id getOwnerId() { return ownerId; }
+	public void setOwnerId(BesUser.Id pOwner) { ownerId = pOwner; }
 	public String getName() { return name; }
 	public void setName(String pName) { name = pName; }
 }
