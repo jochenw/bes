@@ -1,0 +1,7 @@
+<model xmlns="http://namespaces.github.com/jochenw/bes/xmlModel/1.0.0">
+  <users>
+    <user id="0" userId="user0" email="user0@some-employer.com" name="User 0"/>
+    <user id="1" userId="user1" email="user1@some-employer.com" name="User 1"/>
+    <user id="2" userId="user2" email="user2@some-employer.com" name="User 2"/>
+  </users>
+</model>

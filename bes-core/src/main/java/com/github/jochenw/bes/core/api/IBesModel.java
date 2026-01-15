@@ -13,9 +13,9 @@ public interface IBesModel {
 	}
 	public interface IBesUserController extends IBesBeanController<BesUser, IBesUserController.Listener> {
 		public interface Listener extends IBesBeanController.Listener {
-			void inserted(BesUser pUser);
-			void updated(BesUser pUser);
-			void deleted(BesUser pUser);
+			default void inserted(BesUser pUser) {}
+			default void updated(BesUser pUser) {}
+			default void deleted(BesUser pUser) {}
 		}
 		public BesUser insert(BesUser pUser);
 		public void update(BesUser pUser);
@@ -24,4 +24,6 @@ public interface IBesModel {
 		public BesUser getUserByUserId(String pUserId);
 		public BesUser getUserByEmail(String pEmail);
 	}
+
+	public IBesUserController getUserController();
 }
