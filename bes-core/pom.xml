@@ -6,6 +6,7 @@
     <version>0.1-SNAPSHOT</version>
   </parent>
   <artifactId>bes-core</artifactId>
+  <name>BES Batch, and Execution Server (Core Library)</name>
   <dependencies>
     <dependency>
       <groupId>com.github.jochenw.afw</groupId>

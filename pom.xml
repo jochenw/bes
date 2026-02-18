@@ -1,10 +1,10 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+<?xml version="1.0" encoding="UTF-8"?><project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.github.jochenw.bes</groupId>
   <artifactId>bes-parent</artifactId>
   <version>0.1-SNAPSHOT</version>
   <packaging>pom</packaging>
-  <name>BES (Batch, and Execution Server), Parent Project</name>
+  <name>BES Batch, and Execution Server (Parent Project)</name>
   <build>
     <defaultGoal>clean install</defaultGoal>
     <pluginManagement>
@@ -53,6 +53,7 @@
     <maven.compiler.target>21</maven.compiler.target>
   </properties>
   <modules>
-  	<module>bes-core</module>
+    <module>bes-core</module>
+    <module>bes-ui-vdn</module>
   </modules>
 </project>

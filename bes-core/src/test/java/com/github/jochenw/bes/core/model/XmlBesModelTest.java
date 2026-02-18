@@ -69,4 +69,56 @@ class XmlBesModelTest {
 			assertEquals("User " + i, bu.getName());
 		}
 	}
+
+	@Test
+	void testReadModelJobsSample() {
+		final XmlBesModel model = getSampleJobsModel();
+		validateSampleJobs(model);
+	}
+
+	private XmlBesModel getSampleJobsModel() {
+		final XmlBesModel model = new XmlBesModel();
+		final Path p = Paths.get("src/test/resources/com/github/jochenw/bes/core/model/model-jobs-sample.xml");
+		assertTrue(Files.isRegularFile(p));
+		try (InputStream in = Files.newInputStream(p)) {
+			new XmlModelSerializer().read(in, model);
+		} catch (IOException ioe) {
+			throw Exceptions.show(ioe);
+		}
+		return model;
+	}
+
+	private void validateSampleJobs(IBesModel pModel) {
+		validateSampleUsers(pModel);
+		final List<BesJob> jobs = new ArrayList<>();
+		pModel.getJobController().readAll(jobs::add);
+		jobs.sort((j1,j2) -> {
+			return Long.compare(j1.getId().longValue(), j2.getId().longValue());
+		});
+		assertEquals(3, jobs.size());
+		validateJob(jobs.get(0), 0, 0, "Restart Server");
+		validateJob(jobs.get(1), 1, 0, "Validate Db");
+		validateJob(jobs.get(2), 2, 2, "Validate Db");
+	}
+
+	private void validateJob(BesJob pJob, long pId, long pOwnerId, String pName) {
+		assertNotNull(pJob);
+		assertEquals(pId, pJob.getId().longValue());
+		assertEquals(pOwnerId, pJob.getOwner().longValue());
+		assertEquals(pName, pJob.getName());
+	}
+
+	@Test
+	void testReadWriteReadModelJobsSample() throws IOException {
+		final XmlBesModel model = getSampleJobsModel();
+		final ByteArrayOutputStream baos = new ByteArrayOutputStream();
+		final XmlModelSerializer xms = new XmlModelSerializer();
+		xms.write(baos, model);
+		final byte[] bytes = baos.toByteArray();
+		System.out.write(bytes);
+		System.out.println();
+		final XmlBesModel model2 = new XmlBesModel();
+		xms.read(new ByteArrayInputStream(bytes), model2);
+		validateSampleJobs(model2);
+	}
 }
