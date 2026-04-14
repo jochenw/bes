@@ -4,4 +4,5 @@ module com.github.jochenw.bes.core {
 
 	requires com.github.jochenw.afw.core;
 	requires com.github.jochenw.afw.di;
+	requires jakarta.inject;
 }

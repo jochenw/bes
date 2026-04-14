@@ -35,20 +35,7 @@ public interface IBesModel {
 	public interface IBesUserController extends IBesObjectController<BesUser.Id,BesUser>{
 		BesUser getUserById(BesUser.Id pId);
 		BesUser getUserByEmail(String pEmail);
-		default BesUser requireUserById(BesUser.Id pId) {
-			final BesUser bu = getUserById(pId);
-			if (bu == null) {
-				throw new NoSuchElementException("Unknown user id: " + pId);
-			}
-			return bu;
-		}
-		default BesUser requireUserByEmail(String pEmail) {
-			final BesUser bu = getUserByEmail(pEmail);
-			if (bu == null) {
-				throw new NoSuchElementException("Unknown email for user: " + pEmail);
-			}
-			return bu;
-		}
+		BesUser getUserByUserId(String pUserId);
 	}
 
 	public IBesUserController getUserController();
