@@ -44,10 +44,18 @@ public class DefaultBesUserController extends AbstractBesObjectController<BesUse
 
 	@Override
 	public BesUser getUserById(Id pId) {
+		try (Connection conn = newConnection()) {
+			return getUserById(conn, pId, false);
+		} catch (Exception e) {
+			throw Exceptions.show(e);
+		}
+	}
+
+	protected BesUser getUserById(Connection pConnection, Id pId, boolean pForUpdate) {
 		final Long id = Objects.requireNonNull(pId, "Id").getIdObj();
 		final String sql = "SELECT " + FIELDS + " FROM " + TABLE + " WHERE id=?";
-		try (Connection conn = newConnection()) {
-			return getJdbcHelper().query(conn, sql, pId.getIdObj()).call((rs) -> {
+		try {
+			return getJdbcHelper().query(pConnection, sql, pId.getIdObj()).call((rs) -> {
 				if (rs.next()) {
 					final BesUser bu = newBesUser(rs);
 					if (rs.next()) {
@@ -62,7 +70,7 @@ public class DefaultBesUserController extends AbstractBesObjectController<BesUse
 			throw Exceptions.show(e);
 		}
 	}
-
+	
 	@Override
 	public BesUser getUserByEmail(String pEmail) {
 		final String email = Objects.requireNonNull(pEmail, "Email");
@@ -103,5 +111,68 @@ public class DefaultBesUserController extends AbstractBesObjectController<BesUse
 		} catch (Exception e) {
 			throw Exceptions.show(e);
 		}
+	}
+
+	@Override
+	public BesUser insert(BesUser pObject) {
+		final BesUser.Id id = Objects.requireNonNull(pObject, "Object").getId();
+		if (isNullId(id)) {
+			final String sql = "INSERT INTO " + TABLE +
+					" (id, userId, email, usrName) VALUES (?, ?, ?, ?)";
+			final BesUser result;
+			try (Connection conn = newConnection()) {
+				final Id newId = BesUser.Id.of(newId(conn, "BesUsersSeq"));
+				result = BesUser.of(newId, pObject);
+				getJdbcHelper().query(conn, sql,
+						              newId.getIdObj(),
+						              result.getUserId(), result.getEmail(), result.getName()).run();
+			} catch (Exception e) {
+				throw Exceptions.show(e);
+			}
+			notifyListeners((l) -> l.inserted(result));
+			return result;
+		} else {
+			throw new IllegalStateException("The inserted object must have a null id.");
+		}
+	}
+
+	@Override
+	public void update(BesUser pObject) {
+		final BesUser user = Objects.requireNonNull(pObject, "Object");
+		if (isNullId(user.getId())) {
+			throw new IllegalStateException("The updated object must have a non-null id.");
+		}
+		final BesUser oldUser;
+		try (Connection conn = newConnection()) {
+			oldUser = getUserById(conn, user.getId(), true);
+			if (oldUser == null) {
+				throw new IllegalStateException("User id not found for update: " + user.getId().getId());
+			}
+			final String sql = "UPDATE " + TABLE +
+					" SET userId=?, email=?, usrName=? WHERE id=?";
+			getJdbcHelper().query(conn, sql, user.getUserId(),
+					              user.getEmail(), user.getName(), user.getId());
+		} catch (Exception e) {
+			throw Exceptions.show(e);
+		}
+		notifyListeners((l) -> l.updated(oldUser, user));
+	}
+
+	@Override
+	public void delete(BesUser pObject) {
+		final BesUser user = Objects.requireNonNull(pObject, "Object");
+		if (isNullId(user.getId())) {
+			throw new IllegalStateException("The updated object must have a non-null id.");
+		}
+		try (Connection conn = newConnection()) {
+			final String sql = "DELETE FROM " + TABLE + " WHERE id=?";
+			final int count = getJdbcHelper().query(conn, sql, user.getId().getIdObj()).run();
+			if (count == 0) {
+				throw new IllegalStateException("User id not found for delete: " + user.getId().getId());
+			}
+		} catch (Exception e) {
+			throw Exceptions.show(e);
+		}
+		notifyListeners((l) -> l.deleted(user));
 	}
 }

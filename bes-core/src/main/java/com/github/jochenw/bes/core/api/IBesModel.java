@@ -31,6 +31,9 @@ public interface IBesModel {
 			list.sort(pComparator);
 			return list;
 		}
+		O insert(O pObject);
+		void update(O pObject);
+		void delete(O pObject);
 	}
 	public interface IBesUserController extends IBesObjectController<BesUser.Id,BesUser>{
 		BesUser getUserById(BesUser.Id pId);
