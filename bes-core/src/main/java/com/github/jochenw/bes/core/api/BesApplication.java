@@ -16,6 +16,7 @@ import com.github.jochenw.afw.core.props.IPropertyFactory;
 import com.github.jochenw.afw.core.util.Exceptions;
 import com.github.jochenw.afw.di.api.IComponentFactory;
 import com.github.jochenw.afw.di.api.IModule;
+import com.github.jochenw.bes.core.impl.FlywayDbInitializer;
 
 
 public class BesApplication {
@@ -26,8 +27,14 @@ public class BesApplication {
 			return THE_INSTANCE;
 		}
 	}
-	public static void setInstance(IModule pModule) {
-		final BesApplication besApplication = new BesApplication(pModule);
+	public static void setInstance(IModule pModule, String... pUris) {
+		final String[] uris;
+		if (pUris == null  ||  pUris.length == 0) {
+			uris = new String[] {"bes-factory.properties", "bes.properties"};
+		} else {
+			uris = pUris;
+		}
+		final BesApplication besApplication = new BesApplication(pModule, uris);
 		synchronized(BesApplication.class) {
 			THE_INSTANCE = besApplication;
 		}
@@ -38,9 +45,9 @@ public class BesApplication {
 	private final IPropertyFactory propertyFactory;
 	private final ILog log;
 
-	private BesApplication(IModule pModule) {
+	private BesApplication(IModule pModule, String[] pUris) {
 		final IModule module = newModule(pModule);
-		application = Application.of(module, Level.TRACE, "bes-factory.properties", "bes.properties");
+		application = Application.of(module, Level.TRACE, pUris);
 		logFactory = getComponentFactory().requireInstance(ILogFactory.class);
 		propertyFactory = getComponentFactory().requireInstance(IPropertyFactory.class);
 		log = logFactory.getLog(BesApplication.class);
@@ -61,13 +68,14 @@ public class BesApplication {
 	protected IModule newModule(IModule pModule) {
 		final IModule module = (b) -> {
 			b.bind(DataSource.class).to(BesApplication.this::newDataSource);
+			b.bind(FlywayDbInitializer.class).asSingleton();
 		};
 		return module.extend(pModule);
 	}
 
 	protected DataSource newDataSource(IComponentFactory pComponentFactory) {
 		final Properties properties = pComponentFactory.requireInstance(Properties.class);
-		final String dialect = Data.requireString(properties, "dialect");
+		final String dialect = Data.requireString(properties, "jdbc.dialect");
 	    log.info("newDataSource", "Database type is {}", dialect);
 		if ("mariadb".equals(dialect)) {
 			final MariaDbPoolDataSource ds = new MariaDbPoolDataSource();
