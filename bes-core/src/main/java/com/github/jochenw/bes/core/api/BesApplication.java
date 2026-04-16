@@ -75,6 +75,7 @@ public class BesApplication {
 		final IModule module = (b) -> {
 			b.bind(DataSource.class).to(BesApplication.this::newDataSource);
 			b.bind(FlywayDbInitializer.class).asSingleton();
+			b.bind(BesApplication.class).toInstance(this);
 		};
 		return module.extend(pModule);
 	}

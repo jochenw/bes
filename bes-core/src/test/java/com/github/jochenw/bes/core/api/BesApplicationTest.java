@@ -28,8 +28,8 @@ class BesApplicationTest {
 		assertFalse(startable.isStarted());
 		assertNull(BesApplication.getInstance());
 		final IModule module = (b) -> {
-			b.bind(Startable.class).toInstance(startable);
-			b.bind(FlywayDbInitializer.class).asSingleton();
+			b.bind(Startable.class).to((cf) -> startable).asEagerSingleton();
+			b.bind(FlywayDbInitializer.class).asEagerSingleton();
 		};
 		BesApplication.setInstance(module, "bes-factory.properties", "bes-test.properties");
 		final IComponentFactory cf = BesApplication.getInstance().getComponentFactory();
