@@ -5,6 +5,8 @@ import java.sql.Connection;
 import javax.sql.DataSource;
 
 import org.flywaydb.core.Flyway;
+import org.flywaydb.core.api.configuration.ClassicConfiguration;
+import org.flywaydb.core.api.configuration.FluentConfiguration;
 
 import com.github.jochenw.afw.core.util.Exceptions;
 
@@ -26,6 +28,8 @@ public class FlywayDbInitializer {
 			.dataSource(dataSource)
 			.baselineOnMigrate(true)
 			.locations("classpath:com/github/jochenw/bes/core/schema/mariadb")
+			.loggers("slf4j")
+			.validateMigrationNaming(false)
 			.load();
 		flyway.migrate();
 	}
