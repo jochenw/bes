@@ -15,14 +15,11 @@ import com.github.jochenw.afw.core.data.Data;
 import com.github.jochenw.afw.core.log.ILog;
 import com.github.jochenw.afw.core.log.ILog.Level;
 import com.github.jochenw.afw.core.log.ILogFactory;
-import com.github.jochenw.afw.core.props.DefaultPropertyFactory;
 import com.github.jochenw.afw.core.props.IPropertyFactory;
 import com.github.jochenw.afw.core.util.Exceptions;
 import com.github.jochenw.afw.di.api.IComponentFactory;
 import com.github.jochenw.afw.di.api.IModule;
 import com.github.jochenw.bes.core.impl.FlywayDbInitializer;
-
-import jakarta.annotation.Nonnull;
 
 
 public class BesApplication {
@@ -40,48 +37,41 @@ public class BesApplication {
 		} else {
 			uris = pUris;
 		}
-		final BesApplication besApplication = new BesApplication(pModule, uris);
+		final BesApplication besApplication = new BesApplication();
+		besApplication.init(pModule, uris);
 		synchronized(BesApplication.class) {
 			THE_INSTANCE = besApplication;
 		}
 	}
 
-	private final Application application;
-	private final ILogFactory logFactory;
-	private final IPropertyFactory propertyFactory;
-	private final ILog log;
+	private Application application;
+	private IComponentFactory componentFactory;
+	private IPropertyFactory propertyFactory;
+	private ILogFactory logFactory;
 
-	private BesApplication(IModule pModule, String[] pUris) {
-		final IModule module = newModule(pModule);
-		application = Application.of(module, Level.TRACE, pUris);
-		logFactory = getComponentFactory().requireInstance(ILogFactory.class);
-		propertyFactory = getComponentFactory().requireInstance(IPropertyFactory.class);
-		log = logFactory.getLog(BesApplication.class);
-	}
-
-	public IComponentFactory getComponentFactory() {
-		return application.getComponentFactory();
-	}
-
-	public ILogFactory getLogFactory() {
-		return logFactory;
-	}
-
-	public IPropertyFactory getPropertyFactory() {
-		return propertyFactory;
-	}
-
-	protected IModule newModule(IModule pModule) {
+	protected void init(IModule pModule, String[] pUris) {
 		final IModule module = (b) -> {
-			b.bind(DataSource.class).to(BesApplication.this::newDataSource);
+			b.bind(DataSource.class).to(this::newDataSource).asSingleton();
 			b.bind(FlywayDbInitializer.class).asSingleton();
-			b.bind(BesApplication.class).toInstance(this);
 		};
-		return module.extend(pModule);
+		application = Application.of(module.extend(pModule), Level.TRACE, pUris);
+		final IComponentFactory cf = application.getComponentFactory();
+		componentFactory = cf;
+		propertyFactory = cf.requireInstance(IPropertyFactory.class);
+		logFactory = cf.requireInstance(ILogFactory.class);
 	}
 
-	protected DataSource newDataSource(IComponentFactory pComponentFactory) {
-		final Properties properties = getProperties(pComponentFactory);
+	
+	
+	public Application getApplication() { return application; }
+	public IComponentFactory getComponentFactory() { return componentFactory; }
+	public IPropertyFactory getPropertyFactory() { return propertyFactory; }
+	public ILogFactory getLogFactory() { return logFactory; }
+
+	protected DataSource newDataSource(IComponentFactory pCf) {
+		final ILogFactory lf = pCf.requireInstance(ILogFactory.class);
+		final ILog log = lf.getLog(BesApplication.class);
+		final Properties properties = pCf.requireInstance(Properties.class);
 		final String dialect = Data.requireString(properties, "jdbc.dialect");
 	    log.infof("newDataSource", "Database type is %s", dialect);
 		if ("mariadb".equals(dialect)) {
@@ -106,16 +96,5 @@ public class BesApplication {
 			throw new IllegalStateException("Invalid value for property jdbc.type:"
 					+ " Expected mariadb, got " + dialect);
 		}
-	}
-
-	private @Nonnull Properties getProperties(IComponentFactory pComponentFactory) {
-		final Properties properties = pComponentFactory.getInstance(Properties.class);
-		if (properties == null  ||  properties.isEmpty()) {
-			final DefaultPropertyFactory pf = (DefaultPropertyFactory) pComponentFactory.requireInstance(IPropertyFactory.class);
-			final Properties props = new Properties();
-			pf.getPropertyMap().forEach((k,v) -> props.setProperty(k, (String) v));
-			return props;
-		}
-		return properties;
 	}
 }
