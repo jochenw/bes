@@ -57,6 +57,7 @@ public class BesApplication {
 		application = Application.of(module.extend(pModule), Level.TRACE, pUris);
 		final IComponentFactory cf = application.getComponentFactory();
 		componentFactory = cf;
+		cf.init(this);
 		propertyFactory = cf.requireInstance(IPropertyFactory.class);
 		logFactory = cf.requireInstance(ILogFactory.class);
 	}
