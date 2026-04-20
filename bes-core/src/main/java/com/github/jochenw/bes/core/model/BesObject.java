@@ -10,6 +10,9 @@ public abstract class BesObject<ID extends BesObject.Id> {
 
 		public long getId() { return id.longValue(); }
 		public Long getIdObj() { return id; }
+		public static boolean isNullId(Id pId) {
+			return (pId == null  ||  pId.id == null  ||  pId.id.longValue() == 0);
+		}
 	}
 
 	private final ID id;
