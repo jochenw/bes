@@ -36,10 +36,14 @@ public class BesPropertySet extends BesObject<BesPropertySet.Id> {
 	}
 
 	private final Map<String, BesProperty> properties = new HashMap<>();
+	private byte[] digest;
 
 	public BesPropertySet(Id pId) {
 		super(pId);
 	}
+
+	public byte[] getDigest() { return digest; }
+	public void setDigest(byte[] pDigest) { digest = pDigest; }
 
 	public Properties getProperties() {
 		final Properties props = new Properties();
@@ -80,7 +84,10 @@ public class BesPropertySet extends BesObject<BesPropertySet.Id> {
 	}
 
 	public void setProperty(String pKey, String pValue) {
-		properties.put(pKey, updateProperty(pKey, pValue));
+		setProperty(pKey, updateProperty(pKey, pValue));
+	}
+	public void setProperty(String pKey, BesProperty pProperty) {
+		properties.put(pKey, pProperty);
 	}
 	public String getProperty(String pKey) {
 		final BesProperty bps = properties.get(pKey);

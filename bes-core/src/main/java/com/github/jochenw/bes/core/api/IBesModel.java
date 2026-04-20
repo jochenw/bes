@@ -4,9 +4,11 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.Properties;
 import java.util.function.Consumer;
 
 import com.github.jochenw.bes.core.model.BesObject;
+import com.github.jochenw.bes.core.model.BesPropertySet;
 import com.github.jochenw.bes.core.model.BesUser;
 
 public interface IBesModel {
@@ -39,6 +41,11 @@ public interface IBesModel {
 		BesUser getUserById(BesUser.Id pId);
 		BesUser getUserByEmail(String pEmail);
 		BesUser getUserByUserId(String pUserId);
+	}
+	public interface IBesPropertiesController extends IBesObjectController<BesPropertySet.Id,BesPropertySet>{
+		BesPropertySet getPropertySetById(BesPropertySet.Id pId);
+		BesPropertySet insert(Properties pProperties);
+		void update(BesPropertySet pPropertySet, Properties pProperties);
 	}
 
 	public IBesUserController getUserController();
