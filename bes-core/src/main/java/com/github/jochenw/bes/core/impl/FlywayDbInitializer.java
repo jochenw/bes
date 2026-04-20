@@ -28,8 +28,8 @@ public class FlywayDbInitializer {
 			.dataSource(dataSource)
 			.baselineOnMigrate(true)
 			.locations("classpath:com/github/jochenw/bes/core/schema/mariadb")
-			.loggers("slf4j")
 			.validateMigrationNaming(false)
+			.loggers("slf4j")
 			.load();
 		flyway.migrate();
 	}
