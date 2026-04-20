@@ -12,6 +12,7 @@ import javax.sql.DataSource;
 
 import com.github.jochenw.afw.core.jdbc.JdbcHelper;
 import com.github.jochenw.afw.core.log.ILog;
+import com.github.jochenw.afw.core.util.Exceptions;
 import com.github.jochenw.afw.core.util.Objects;
 import com.github.jochenw.afw.di.api.IComponentFactory;
 import com.github.jochenw.afw.di.api.IComponentFactoryAware;
@@ -50,10 +51,14 @@ public abstract class AbstractBesObjectController<ID extends BesObject.Id,O exte
 		}
 	}
 
-	protected Long newId(Connection pConnection, String pSequenceName) {
-		final String sql = "SELECT NEXT VALUE FOR " + pSequenceName;
-		final long id = getJdbcHelper().query(pConnection, sql).countLong();
-		return Long.valueOf(id);
+	protected Long newId(String pSequenceName) {
+		try (Connection conn = newConnection()) {
+			final String sql = "SELECT NEXT VALUE FOR " + pSequenceName;
+			final long id = getJdbcHelper().query(conn, sql).countLong();
+			return Long.valueOf(id);
+		} catch (SQLException se) {
+			throw Exceptions.show(se);
+		}
 	}
 	protected DefaultBesModel getModel() { return model; }
 	protected Connection newConnection() throws SQLException { return connectionProvider.getConnection(); }

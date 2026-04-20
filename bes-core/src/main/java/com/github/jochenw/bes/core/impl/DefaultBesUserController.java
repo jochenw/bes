@@ -120,8 +120,8 @@ public class DefaultBesUserController extends AbstractBesObjectController<BesUse
 			final String sql = "INSERT INTO " + TABLE +
 					" (id, userId, email, usrName) VALUES (?, ?, ?, ?)";
 			final BesUser result;
+			final Id newId = BesUser.Id.of(newId("BesUsersSeq"));
 			try (Connection conn = newConnection()) {
-				final Id newId = BesUser.Id.of(newId(conn, "BesUsersSeq"));
 				result = BesUser.of(newId, pObject);
 				getJdbcHelper().query(conn, sql,
 						              newId.getIdObj(),

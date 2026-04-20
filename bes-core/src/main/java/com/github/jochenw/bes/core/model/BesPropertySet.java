@@ -55,39 +55,17 @@ public class BesPropertySet extends BesObject<BesPropertySet.Id> {
 	}
 
 	public void setProperties(Properties pProperties) {
-		final Map<String, BesProperty> newMap = new HashMap<>();
-		pProperties.forEach((k,v) -> {
-			BesProperty bp = updateProperty((String) k, (String) v);
-			newMap.put((String) k, bp);
-		});
+		final BesPropertySet.Id setId = getId();
 		properties.clear();
-		properties.putAll(newMap);
-	}
-
-	private BesProperty updateProperty(String pKey, String pValue) {
-		BesProperty bp = properties.get(pKey);
-		boolean create;
-		if (bp == null) {
-			create = true;
-		} else {
-			final BesProperty.Id id = bp.getId();
-			if (BesObject.Id.isNullId(id)) {
-				create = true;
-			} else {
-				create = bp.getValue().equals(pValue);
-			}
-		}
-		if (create) {
-			return new BesProperty(BesProperty.Id.noId(), pKey, pValue);
-		}
-		return bp;
+		pProperties.forEach((k,v) -> {
+			BesProperty bp = new BesProperty(setId, (String) k, (String) v);
+			properties.put((String) k, bp);
+		});
 	}
 
 	public void setProperty(String pKey, String pValue) {
-		setProperty(pKey, updateProperty(pKey, pValue));
-	}
-	public void setProperty(String pKey, BesProperty pProperty) {
-		properties.put(pKey, pProperty);
+		final BesProperty bp = new BesProperty(getId(), pKey, pValue);
+		properties.put(pKey, bp);
 	}
 	public String getProperty(String pKey) {
 		final BesProperty bps = properties.get(pKey);
@@ -160,5 +138,38 @@ public class BesPropertySet extends BesObject<BesPropertySet.Id> {
 			throw new IllegalStateException("Expected 32 bytes, got " + bytes.length);
 		}
 		return bytes;
+	}
+
+	/** Compares two property sets.
+	 * @param pBps1
+	 * @param pBps2
+	 * @return True, if the property sets are the same, otherwise false.
+	 */
+	public static boolean same(BesPropertySet pBps1, BesPropertySet pBps2) {
+		final Map<String,BesProperty> map1 = pBps1.getPropertyMap();
+		final Map<String,BesProperty> map2 = pBps2.getPropertyMap();
+		if (map1.size() == map2.size()) {
+			for (String k : map1.keySet()) {
+				final BesProperty bp1 = Objects.requireNonNull(map1.get(k));
+				final BesProperty bp2 = map2.get(k);
+				if (bp2 == null) {
+					return false;
+				}
+				final String v1 = bp1.getValue();
+				final String v2 = bp2.getValue();
+				if (v1 == null) {
+					if (v2 != null) {
+						return false;
+					}
+				} else {
+					if (!v1.equals(v2)) {
+						return false;
+					}
+				}
+			}
+			return true;
+		} else {
+			return false;
+		}
 	}
 }

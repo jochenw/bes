@@ -1,6 +1,7 @@
 package com.github.jochenw.bes.core.impl;
 
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -10,6 +11,7 @@ import java.util.Properties;
 import java.util.function.Consumer;
 
 import com.github.jochenw.afw.core.util.Exceptions;
+import com.github.jochenw.afw.core.util.Holder;
 import com.github.jochenw.afw.core.util.Objects;
 import com.github.jochenw.bes.core.api.IBesModel.IBesPropertiesController;
 import com.github.jochenw.bes.core.model.BesProperty;
@@ -21,7 +23,7 @@ public class DefaultBesPropertiesController extends AbstractBesObjectController<
 	private static final String TABLE = "BesPropertySets";
 	private static final String FIELDS = "id, digest";
 	private static final String TABLE2 = "BesProperties";
-	private static final String FIELDS2 = "id, setId, pKey, pValue";
+	private static final String FIELDS2 = "setId, pKey, pValue";
 
 	@Override
 	public void readAll(Consumer<BesPropertySet> pConsumer) {
@@ -77,24 +79,90 @@ public class DefaultBesPropertiesController extends AbstractBesObjectController<
 			sb.append(")");
 			getJdbcHelper().query(pConn, sb.toString()).runWithRows((rs) -> {
 				while(rs.next()) {
-					final Long id = Objects.requireNonNull(rs.nextLongObj(), "BesProperties.id");
 					final Long setId = Objects.requireNonNull(rs.nextLongObj(), "BesProperties.setId");
 					final String key = Objects.requireNonNull(rs.nextStr(), "BesProperties.pKey");
 					final String value = Objects.requireNonNull(rs.nextStr(), "BesProperties.pValue");
-					final BesPropertySet bps = java.util.Objects.requireNonNull(map.get(setId), () -> "Id: " + id);
-					final BesProperty bp = new BesProperty(BesProperty.Id.of(id), key, value);
-					bps.setProperty(key, bp);
+					final BesPropertySet bps = map.get(setId);
+					if (bps == null) {
+						throw new NullPointerException("BesPropertySet not found for id: " + setId);
+					}
+					bps.setProperty(key, value);
 				}
 			});
 			pProperties.forEach(pConsumer);
 			pProperties.clear();
 		}
 	}
-	
+
+	protected BesPropertySet findExisting(BesPropertySet pBps) {
+		final byte[] digest;
+		if (pBps.getDigest() == null) {
+			digest = BesPropertySet.getDigest(pBps);
+			pBps.setDigest(digest);
+		} else {
+			digest = pBps.getDigest();
+		}
+		
+		try (Connection conn = newConnection()) {
+			final List<BesPropertySet> list = new ArrayList<>();
+			final String sql = "SELECT id FROM " + TABLE + " WHERE digest=?";
+			getJdbcHelper().query(conn, sql, digest).run((rs) -> {
+				while (rs.next()) {
+					final long idValue = rs.getLong(1);
+					if (rs.wasNull()) {
+						throw new NullPointerException("BesPropertySet.Id");
+					}
+					final BesPropertySet.Id id = BesPropertySet.Id.of(idValue);
+					final BesPropertySet bps = new BesPropertySet(id);
+					bps.setDigest(digest);
+					list.add(bps);
+				}
+			});
+			final Holder<BesPropertySet> result = Holder.of();
+			fillPropertyValues(conn, list, (bps) -> {
+				if (result.get() == null  &&  BesPropertySet.same(result.get(), pBps)) {
+					result.set(bps);
+				}
+			});
+			return result.get();
+		} catch (SQLException se) {
+			throw Exceptions.show(se);
+		}
+		
+	}
 	@Override
-	public BesPropertySet insert(BesPropertySet pObject) {
-		// TODO Auto-generated method stub
-		return null;
+	public BesPropertySet insert(BesPropertySet pBps) {
+		final BesPropertySet existing = findExisting(pBps);
+		if (existing == null) {
+			return existing;
+		}
+		
+		final Long setIdObj = newId("PropertySetsSeq");
+		final BesPropertySet.Id setId = BesPropertySet.Id.of(setIdObj);
+		try (Connection conn = newConnection()) {
+			final String sql = "INSERT INTO " + TABLE + " (" + FIELDS + ") VALUES (?, ?)";
+			getJdbcHelper().query(conn, sql, setId.getIdObj(), pBps.getDigest()).run();
+			final String sql2 = "INSERT INTO " + TABLE2 + " (" + FIELDS2 + ") VALUES (?, ?, ?)";
+			try (PreparedStatement stmt = conn.prepareStatement(sql2)) {
+				pBps.forEach((k,v) -> {
+					try {
+						stmt.setLong(1, setIdObj.longValue());
+						stmt.setString(2, k);
+						stmt.setString(3,  v);
+						stmt.executeUpdate();
+					} catch (SQLException se) {
+						throw Exceptions.show(se);
+					}
+				});
+			}
+			final BesPropertySet bps = new BesPropertySet(setId);
+			bps.getPropertyMap().putAll(pBps.getPropertyMap());
+			return bps;
+		} catch (SQLException se) {
+			throw Exceptions.show(se);
+		}
+		
+			
 	}
 
 	@Override

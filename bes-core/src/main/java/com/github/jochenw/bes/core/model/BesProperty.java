@@ -1,35 +1,22 @@
 package com.github.jochenw.bes.core.model;
 
-import com.github.jochenw.afw.core.util.Objects;
 
-
-public class BesProperty extends BesObject<BesProperty.Id> {
-	public static class Id extends BesObject.Id {
-		protected Id(Long pId) {
-			super(pId);
-		}
-
-		public static Id of(long pId) { return new Id(Long.valueOf(pId)); }
-		public static Id of(Long pId) {
-			final Long id = Objects.requireNonNull(pId);
-			return new Id(id);
-		}
-		public static Id noId() { return new Id(null); }
-	}
-
+public class BesProperty {
+	private final BesPropertySet.Id setId;
 	private final String key, value;
 
-	public BesProperty(BesProperty.Id pId, String pKey, String pValue) {
-		super(pId);
+	public BesProperty(BesPropertySet.Id pSetId, String pKey, String pValue) {
+		setId = pSetId;
 		key = pKey;
 		value = pValue;
 	}
 
+	public BesPropertySet.Id getSetId() { return setId; }
 	public String getKey() { return key; }
 	public String getValue() { return value; }
 
 	@Override
 	protected Object clone() {
-		return new BesProperty(getId(), getKey(), getValue());
+		return new BesProperty(getSetId(), getKey(), getValue());
 	}
 }
