@@ -13,7 +13,7 @@ import com.github.jochenw.bes.core.model.BesUser.Id;
 
 
 public class DefaultBesUserController extends AbstractBesObjectController<BesUser.Id,BesUser> implements IBesUserController {
-	private static final String TABLE = "BesUsers";
+	private static final String TABLE = "Users";
 	private static final String FIELDS = "id, userId, email, usrName";
 
 	@Override
@@ -120,7 +120,7 @@ public class DefaultBesUserController extends AbstractBesObjectController<BesUse
 			final String sql = "INSERT INTO " + TABLE +
 					" (id, userId, email, usrName) VALUES (?, ?, ?, ?)";
 			final BesUser result;
-			final Id newId = BesUser.Id.of(newId("BesUsersSeq"));
+			final Id newId = BesUser.Id.of(newId(TABLE + "Seq"));
 			try (Connection conn = newConnection()) {
 				result = BesUser.of(newId, pObject);
 				getJdbcHelper().query(conn, sql,
@@ -137,7 +137,7 @@ public class DefaultBesUserController extends AbstractBesObjectController<BesUse
 	}
 
 	@Override
-	public void update(BesUser pObject) {
+	public BesUser update(BesUser pObject) {
 		final BesUser user = Objects.requireNonNull(pObject, "Object");
 		if (isNullId(user.getId())) {
 			throw new IllegalStateException("The updated object must have a non-null id.");
@@ -156,6 +156,7 @@ public class DefaultBesUserController extends AbstractBesObjectController<BesUse
 			throw Exceptions.show(e);
 		}
 		notifyListeners((l) -> l.updated(oldUser, user));
+		return user;
 	}
 
 	@Override
