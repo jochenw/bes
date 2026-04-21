@@ -53,6 +53,7 @@ public class BesApplication {
 		final IModule module = (b) -> {
 			b.bind(DataSource.class).to(this::newDataSource).asSingleton();
 			b.bind(FlywayDbInitializer.class).asSingleton();
+			b.bind(BesApplication.class).toInstance(BesApplication.this);
 		};
 		application = Application.of(module.extend(pModule), Level.TRACE, pUris);
 		final IComponentFactory cf = application.getComponentFactory();
@@ -70,16 +71,20 @@ public class BesApplication {
 	public ILogFactory getLogFactory() { return logFactory; }
 
 	protected DataSource newDataSource(IComponentFactory pCf) {
+		return newDataSource(pCf, "jdbc");
+	}
+
+	public DataSource newDataSource(IComponentFactory pCf, String pPrefix) {
 		final ILogFactory lf = pCf.requireInstance(ILogFactory.class);
 		final ILog log = lf.getLog(BesApplication.class);
 		final Properties properties = pCf.requireInstance(Properties.class);
-		final String dialect = Data.requireString(properties, "jdbc.dialect");
+		final String dialect = Data.requireString(properties, pPrefix +".dialect");
 	    log.infof("newDataSource", "Database type is %s", dialect);
 		if ("mariadb".equals(dialect)) {
 			final MariaDbDataSource ds = new MariaDbDataSource();
-			final String url = Data.requireString(properties, "jdbc.url");
-			final String user = Data.requireString(properties, "jdbc.user");
-			final String pwd = Data.requireString(properties, "jdbc.pwd");
+			final String url = Data.requireString(properties, pPrefix + ".url");
+			final String user = Data.requireString(properties, pPrefix + ".user");
+			final String pwd = Data.requireString(properties, pPrefix + ".pwd");
 			log.infof("newDataSource", "MariaDB URL is %s", url);
 			log.infof("newDataSource", "MariaDB user is %s", user);
 			log.infof("newDataSource", "MariaDB password is not being logged.");

@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test;
 import com.github.jochenw.afw.di.api.IComponentFactory;
 import com.github.jochenw.afw.di.api.IModule;
 import com.github.jochenw.bes.core.impl.FlywayDbInitializer;
+import com.github.jochenw.bes.core.impl.Tests;
 
 import jakarta.annotation.PostConstruct;
 
@@ -28,15 +29,13 @@ class BesApplicationTest {
 		assertFalse(startable.isStarted());
 		assertNull(BesApplication.getInstance());
 		final IModule module = (b) -> {
-			b.bind(Startable.class).to((cf) -> startable).asEagerSingleton();
-			b.bind(FlywayDbInitializer.class).asEagerSingleton();
+			b.bind(Startable.class).to((cf) -> startable);
 		};
-		BesApplication.setInstance(module, "bes-factory.properties", "bes-test.properties");
-		final IComponentFactory cf = BesApplication.getInstance().getComponentFactory();
+		final IComponentFactory cf = Tests.newCf(module);
 		assertNotNull(cf);
 		assertNotNull(cf.requireInstance(FlywayDbInitializer.class));
-		assertTrue(startable.isStarted());
 		assertSame(startable, cf.getInstance(Startable.class));
+		assertTrue(startable.isStarted());
 	}
 
 }
