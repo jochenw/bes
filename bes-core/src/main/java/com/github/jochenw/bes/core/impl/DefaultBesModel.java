@@ -4,14 +4,21 @@ import com.github.jochenw.afw.di.api.IComponentFactory;
 import com.github.jochenw.afw.di.api.IComponentFactoryAware;
 import com.github.jochenw.bes.core.api.IBesModel;
 
+
 public class DefaultBesModel implements IBesModel, IComponentFactoryAware {
 	private DefaultBesUserController besUserController;
+	private DefaultBesPropertiesController besPropertiesController;
 
 	@Override
 	public void init(IComponentFactory pCf) {
 		besUserController = (DefaultBesUserController) pCf.requireInstance(IBesUserController.class);
+		besPropertiesController = (DefaultBesPropertiesController) pCf.requireInstance(IBesPropertiesController.class);
 	}
 
+
+	
+	@Override
+	public IBesPropertiesController getPropertiesController() { return besPropertiesController; }
 
 	@Override
 	public IBesUserController getUserController() { return besUserController; }

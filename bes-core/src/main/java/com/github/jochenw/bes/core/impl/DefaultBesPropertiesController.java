@@ -10,10 +10,13 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.function.Consumer;
 
+import com.github.jochenw.afw.core.function.Functions.FailableConsumer;
+import com.github.jochenw.afw.core.jdbc.JdbcHelper;
 import com.github.jochenw.afw.core.util.Exceptions;
 import com.github.jochenw.afw.core.util.Holder;
 import com.github.jochenw.afw.core.util.Objects;
 import com.github.jochenw.bes.core.api.IBesModel.IBesPropertiesController;
+import com.github.jochenw.bes.core.model.BesObject;
 import com.github.jochenw.bes.core.model.BesProperty;
 import com.github.jochenw.bes.core.model.BesPropertySet;
 import com.github.jochenw.bes.core.model.BesPropertySet.Id;
@@ -89,7 +92,9 @@ public class DefaultBesPropertiesController extends AbstractBesObjectController<
 					bps.setProperty(key, value);
 				}
 			});
-			pProperties.forEach(pConsumer);
+			if (pConsumer != null) {
+				pProperties.forEach(pConsumer);
+			}
 			pProperties.clear();
 		}
 	}
@@ -166,32 +171,93 @@ public class DefaultBesPropertiesController extends AbstractBesObjectController<
 	}
 
 	@Override
-	public void update(BesPropertySet pObject) {
-		// TODO Auto-generated method stub
-		
+	public BesPropertySet update(BesPropertySet pBps) {
+		if (BesObject.Id.isNullId(pBps.getId())) {
+			throw new IllegalStateException("A new property set must be inserted.");
+		}
+		final BesPropertySet existing = getPropertySetById(pBps.getId());
+		if (BesPropertySet.same(existing, pBps)) {
+			return pBps;
+		} else {
+			final BesPropertySet bps = new BesPropertySet(BesPropertySet.Id.noId());
+			bps.getPropertyMap().putAll(pBps.getPropertyMap());
+			return insert(pBps);
+		}
 	}
 
 	@Override
-	public void delete(BesPropertySet pObject) {
-		// TODO Auto-generated method stub
-		
+	public void delete(BesPropertySet pBps) {
+		if (BesObject.Id.isNullId(pBps.getId())) {
+			throw new IllegalStateException("A new property set cannot be deleted.");
+		}
+		try (Connection conn = newConnection()) {
+			final JdbcHelper jh = getJdbcHelper();
+			jh.transaction(conn, (FailableConsumer<Connection, ?>) (cnn) -> {
+				final Long id = pBps.getId().getIdObj();
+				final String sql2 = "DELETE FROM" + TABLE2 + " WHERE setId=?";
+				jh.query(cnn, sql2, id).run();
+				final String sql = "DELETE FROM " + TABLE + " WHERE id=?";
+				final int numberOfDeletedSets = jh.query(cnn, sql, id).run();
+				if (numberOfDeletedSets == 0) {
+					throw new IllegalStateException("Property set not found: " + id);
+				}
+			});
+		} catch (SQLException se) {
+			throw Exceptions.show(se);
+		}
 	}
 
 	@Override
 	public BesPropertySet getPropertySetById(Id pId) {
-		// TODO Auto-generated method stub
-		return null;
+		final Id id = Objects.requireNonNull(pId, "Id");
+		if (BesObject.Id.isNullId(id)) {
+			throw new IllegalStateException("The property set to load must not have a null id.");
+		}
+		try (Connection conn = newConnection()) {
+			final String sql = "SELECT id FROM " + TABLE + " WHERE id=?";
+			return getJdbcHelper().query(conn, sql, id.getIdObj()).call((rs) -> {
+				if (rs.next()) {
+					final long idVal = rs.getLong(1);
+					if (rs.wasNull()) {
+						throw new NullPointerException("BesPropertySet.id");
+					}
+					final BesPropertySet bps = new BesPropertySet(BesPropertySet.Id.of(idVal));
+					if (rs.next()) {
+						throw new IllegalStateException("Query returned multipe rows for id=" + id.getId());
+					}
+					final List<BesPropertySet> list = new ArrayList<>(1);
+					list.add(bps);
+					fillPropertyValues(conn, list, null);
+					return bps;
+				} else {
+					return null;
+				}
+			});
+		} catch (SQLException se) {
+			throw Exceptions.show(se);
+		}
 	}
 
 	@Override
 	public BesPropertySet insert(Properties pProperties) {
-		// TODO Auto-generated method stub
-		return null;
+		final BesPropertySet bps = asBesPropertySet(BesPropertySet.Id.noId(), pProperties);
+		return insert(bps);
+	}
+
+	private BesPropertySet asBesPropertySet(BesPropertySet.Id pSetId, Properties pProperties) {
+		final BesPropertySet bps = new BesPropertySet(pSetId);
+		final Map<String, BesProperty> map = bps.getPropertyMap();
+		pProperties.forEach((k,v) -> {
+			final String key = (String) k;
+			final String value = (String) v;
+			map.put(key, new BesProperty(pSetId, key, value));
+		});
+		return bps;
 	}
 
 	@Override
-	public void update(BesPropertySet pPropertySet, Properties pProperties) {
-		// TODO Auto-generated method stub
-		
+	public BesPropertySet update(BesPropertySet pPropertySet, Properties pProperties) {
+		final BesPropertySet.Id id = pPropertySet.getId();
+		return update(asBesPropertySet(id, pProperties));
 	}
 }

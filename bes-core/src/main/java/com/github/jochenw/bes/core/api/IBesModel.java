@@ -3,7 +3,6 @@ package com.github.jochenw.bes.core.api;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.Properties;
 import java.util.function.Consumer;
 
@@ -34,7 +33,7 @@ public interface IBesModel {
 			return list;
 		}
 		O insert(O pObject);
-		void update(O pObject);
+		O update(O pObject);
 		void delete(O pObject);
 	}
 	public interface IBesUserController extends IBesObjectController<BesUser.Id,BesUser>{
@@ -45,8 +44,9 @@ public interface IBesModel {
 	public interface IBesPropertiesController extends IBesObjectController<BesPropertySet.Id,BesPropertySet>{
 		BesPropertySet getPropertySetById(BesPropertySet.Id pId);
 		BesPropertySet insert(Properties pProperties);
-		void update(BesPropertySet pPropertySet, Properties pProperties);
+		BesPropertySet update(BesPropertySet pPropertySet, Properties pProperties);
 	}
 
 	public IBesUserController getUserController();
+	public IBesPropertiesController getPropertiesController();
 }
