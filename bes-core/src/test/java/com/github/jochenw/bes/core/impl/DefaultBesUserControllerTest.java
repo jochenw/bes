@@ -31,7 +31,9 @@ class DefaultBesUserControllerTest {
 	
 	@BeforeAll
 	static void initCf() {
+		FlywayDbInitializer.SKIPPING = true;
 		CF = Tests.newCf();
+		FlywayDbInitializer.SKIPPING = false;
 	}
 
 	private DataSource adminDataSource;
@@ -79,7 +81,7 @@ class DefaultBesUserControllerTest {
 	void testUpdateUsers() {
 		testCreateUsers();
 		final @NonNull IBesUserController uc = getUserController();
-		final BesUser johnDoeUser = uc.getUserById(BesUser.Id.of(1));
+		final BesUser johnDoeUser = uc.getUserById(BesUser.Id.of(2));
 		assertNotNull(johnDoeUser);
 		johnDoeUser.setUserId("jpdoe");
 		johnDoeUser.setEmail("john.p.doe@somecompany.com");

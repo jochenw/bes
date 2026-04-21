@@ -18,6 +18,9 @@ public class FlywayDbInitializer {
 
 	@PostConstruct
 	public void run() {
+		if (SKIPPING) {
+			return;
+		}
 		// Test, whether we can connect to the database.
 		try (Connection conn = dataSource.getConnection()) {
 			
@@ -33,4 +36,6 @@ public class FlywayDbInitializer {
 			.load();
 		flyway.migrate();
 	}
+
+	public static boolean SKIPPING = false;
 }

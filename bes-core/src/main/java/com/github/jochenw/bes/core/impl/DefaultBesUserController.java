@@ -151,7 +151,8 @@ public class DefaultBesUserController extends AbstractBesObjectController<BesUse
 			final String sql = "UPDATE " + TABLE +
 					" SET userId=?, email=?, usrName=? WHERE id=?";
 			getJdbcHelper().query(conn, sql, user.getUserId(),
-					              user.getEmail(), user.getName(), user.getId());
+					              user.getEmail(), user.getName(), user.getId().getIdObj())
+						   .run();
 		} catch (Exception e) {
 			throw Exceptions.show(e);
 		}

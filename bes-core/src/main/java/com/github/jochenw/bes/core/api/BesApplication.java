@@ -3,15 +3,19 @@ package com.github.jochenw.bes.core.api;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
+import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.Properties;
 
 import javax.sql.DataSource;
 
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.mariadb.jdbc.MariaDbDataSource;
 
 import com.github.jochenw.afw.core.app.Application;
 import com.github.jochenw.afw.core.data.Data;
+import com.github.jochenw.afw.core.jdbc.JdbcHelper;
 import com.github.jochenw.afw.core.log.ILog;
 import com.github.jochenw.afw.core.log.ILog.Level;
 import com.github.jochenw.afw.core.log.ILogFactory;
@@ -25,6 +29,7 @@ import com.github.jochenw.bes.core.impl.DefaultBesModel;
 import com.github.jochenw.bes.core.impl.DefaultBesPropertiesController;
 import com.github.jochenw.bes.core.impl.DefaultBesUserController;
 import com.github.jochenw.bes.core.impl.FlywayDbInitializer;
+import com.github.jochenw.bes.core.model.BesObject;
 
 
 public class BesApplication {
@@ -62,6 +67,19 @@ public class BesApplication {
 			b.bind(IBesModel.class).toClass(DefaultBesModel.class);
 			b.bind(IBesUserController.class).toClass(DefaultBesUserController.class);
 			b.bind(IBesPropertiesController.class).toClass(DefaultBesPropertiesController.class);
+			final JdbcHelper helper = new JdbcHelper() {
+				@Override
+				public void setParameter(PreparedStatement pStmt, int pInd, Object pParam)
+						throws SQLException {
+					if (pParam != null  &&  pParam instanceof BesObject.Id) {
+						final BesObject.Id id = (BesObject.Id) pParam;
+						super.setParameter(pStmt, pInd, id.getIdObj());
+					} else {
+						super.setParameter(pStmt, pInd, pParam);
+					}
+				}
+			};
+			b.bind(JdbcHelper.class).toInstance(helper);
 		};
 		application = Application.of(module.extend(pModule), Level.TRACE, pUris);
 		final IComponentFactory cf = application.getComponentFactory();
