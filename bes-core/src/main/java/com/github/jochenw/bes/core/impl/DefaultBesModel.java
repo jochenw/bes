@@ -1,20 +1,13 @@
 package com.github.jochenw.bes.core.impl;
 
-import com.github.jochenw.afw.di.api.IComponentFactory;
-import com.github.jochenw.afw.di.api.IComponentFactoryAware;
 import com.github.jochenw.bes.core.api.IBesModel;
 
+import jakarta.inject.Inject;
 
-public class DefaultBesModel implements IBesModel, IComponentFactoryAware {
-	private DefaultBesUserController besUserController;
-	private DefaultBesPropertiesController besPropertiesController;
 
-	@Override
-	public void init(IComponentFactory pCf) {
-		besUserController = (DefaultBesUserController) pCf.requireInstance(IBesUserController.class);
-		besPropertiesController = (DefaultBesPropertiesController) pCf.requireInstance(IBesPropertiesController.class);
-	}
-
+public class DefaultBesModel implements IBesModel {
+	private @Inject IBesUserController besUserController;
+	private @Inject IBesPropertiesController besPropertiesController;
 
 	
 	@Override

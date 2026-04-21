@@ -23,17 +23,12 @@ import com.github.jochenw.bes.core.api.IBesModel.IListener;
 import com.github.jochenw.bes.core.model.BesObject;
 
 
-public abstract class AbstractBesObjectController<ID extends BesObject.Id,O extends BesObject<ID>> implements IBesObjectController<ID, O>, IComponentFactoryAware {
-	private DefaultBesModel model;
+public abstract class AbstractBesObjectController<ID extends BesObject.Id,O extends BesObject<ID>> implements IBesObjectController<ID, O> {
+	private @Inject IBesModel model;
 	private @Inject DataSource connectionProvider;
 	private @LogInject ILog log;
 	private final List<IListener<ID,O>> listeners = new ArrayList<>();
 	private @Inject JdbcHelper jdbcHelper;
-
-	@Override
-	public void init(IComponentFactory pCf) {
-		model = (DefaultBesModel) pCf.requireInstance(IBesModel.class);
-	}
 
 	@Override
 	public void add(IListener<ID, O> pListener) {
@@ -60,7 +55,7 @@ public abstract class AbstractBesObjectController<ID extends BesObject.Id,O exte
 			throw Exceptions.show(se);
 		}
 	}
-	protected DefaultBesModel getModel() { return model; }
+	protected DefaultBesModel getModel() { return (DefaultBesModel) model; }
 	protected Connection newConnection() throws SQLException { return connectionProvider.getConnection(); }
 	protected JdbcHelper getJdbcHelper() { return jdbcHelper; }
 

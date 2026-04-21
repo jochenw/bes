@@ -19,6 +19,11 @@ import com.github.jochenw.afw.core.props.IPropertyFactory;
 import com.github.jochenw.afw.core.util.Exceptions;
 import com.github.jochenw.afw.di.api.IComponentFactory;
 import com.github.jochenw.afw.di.api.IModule;
+import com.github.jochenw.bes.core.api.IBesModel.IBesPropertiesController;
+import com.github.jochenw.bes.core.api.IBesModel.IBesUserController;
+import com.github.jochenw.bes.core.impl.DefaultBesModel;
+import com.github.jochenw.bes.core.impl.DefaultBesPropertiesController;
+import com.github.jochenw.bes.core.impl.DefaultBesUserController;
 import com.github.jochenw.bes.core.impl.FlywayDbInitializer;
 
 
@@ -54,6 +59,9 @@ public class BesApplication {
 			b.bind(DataSource.class).to(this::newDataSource).asSingleton();
 			b.bind(FlywayDbInitializer.class).asSingleton();
 			b.bind(BesApplication.class).toInstance(BesApplication.this);
+			b.bind(IBesModel.class).toClass(DefaultBesModel.class);
+			b.bind(IBesUserController.class).toClass(DefaultBesUserController.class);
+			b.bind(IBesPropertiesController.class).toClass(DefaultBesPropertiesController.class);
 		};
 		application = Application.of(module.extend(pModule), Level.TRACE, pUris);
 		final IComponentFactory cf = application.getComponentFactory();
