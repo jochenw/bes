@@ -91,13 +91,26 @@ class DefaultBesUserControllerTest {
 			assertUser(bu, 2, "jpdoe", "john.p.doe@somecompany.com", "Doe, John P.");
 		};
 		validator.accept(updatedUser);
-		final BesUser jpDoeUser = uc.getUserById(BesUser.Id.of(1));
+		final BesUser jpDoeUser = uc.getUserById(BesUser.Id.of(2));
 		validator.accept(jpDoeUser);
 		final List<BesUser> users = uc.getAll();
 		assertEquals(3, users.size());
 		assertUser(users.get(0), 1, "jwi", "joe@somecompany.com", "Wiedmann, Jochen");
 		validator.accept(users.get(1));
 		assertUser(users.get(2), 3, "jadoe", "jane.doe@somecompany.com", "Doe, Jane");
+	}
+
+	@Test
+	void testDeleteUsers() {
+		testCreateUsers();
+		final @NonNull IBesUserController uc = getUserController();
+		final BesUser johnDoeUser = uc.getUserById(BesUser.Id.of(2));
+		assertNotNull(johnDoeUser);
+		uc.delete(johnDoeUser);
+		final List<BesUser> users = uc.getAll();
+		assertEquals(2, users.size());
+		assertUser(users.get(0), 1, "jwi", "joe@somecompany.com", "Wiedmann, Jochen");
+		assertUser(users.get(1), 3, "jadoe", "jane.doe@somecompany.com", "Doe, Jane");
 	}
 	private void assertUser(BesUser pBu, int pId, String pUserId, String pEmail, String pName) {
 		final BesUser.Id id = BesUser.Id.of((long) pId);

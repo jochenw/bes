@@ -9,8 +9,6 @@ import java.util.Properties;
 
 import javax.sql.DataSource;
 
-import org.jspecify.annotations.NonNull;
-import org.jspecify.annotations.Nullable;
 import org.mariadb.jdbc.MariaDbDataSource;
 
 import com.github.jochenw.afw.core.app.Application;
