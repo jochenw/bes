@@ -3,9 +3,11 @@ package com.github.jochenw.bes.core.api;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.Properties;
 import java.util.function.Consumer;
 
+import com.github.jochenw.bes.core.impl.DuplicateKeyException;
 import com.github.jochenw.bes.core.model.BesObject;
 import com.github.jochenw.bes.core.model.BesPropertySet;
 import com.github.jochenw.bes.core.model.BesUser;
@@ -32,9 +34,9 @@ public interface IBesModel {
 			list.sort(pComparator);
 			return list;
 		}
-		O insert(O pObject);
-		O update(O pObject);
-		void delete(O pObject);
+		O insert(O pObject) throws DuplicateKeyException;
+		O update(O pObject) throws NoSuchElementException, DuplicateKeyException;
+		void delete(O pObject) throws NoSuchElementException;
 	}
 	public interface IBesUserController extends IBesObjectController<BesUser.Id,BesUser>{
 		BesUser getUserById(BesUser.Id pId);

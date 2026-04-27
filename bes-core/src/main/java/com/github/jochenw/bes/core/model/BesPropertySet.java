@@ -53,18 +53,21 @@ public class BesPropertySet extends BesObject<BesPropertySet.Id> {
 	public Map<String, BesProperty> getPropertyMap() {
 		return Collections.unmodifiableMap(properties);
 	}
+	public Map<String, BesProperty> getModifiablePropertyMap() {
+		return properties;
+	}
 
 	public void setProperties(Properties pProperties) {
 		final BesPropertySet.Id setId = getId();
 		properties.clear();
 		pProperties.forEach((k,v) -> {
-			BesProperty bp = new BesProperty(setId, (String) k, (String) v);
+			BesProperty bp = BesProperty.of(setId, false, (String) k, (String) v);
 			properties.put((String) k, bp);
 		});
 	}
 
 	public void setProperty(String pKey, String pValue) {
-		final BesProperty bp = new BesProperty(getId(), pKey, pValue);
+		final BesProperty bp = BesProperty.of(getId(), false, pKey, pValue);
 		properties.put(pKey, bp);
 	}
 	public String getProperty(String pKey) {

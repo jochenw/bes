@@ -31,7 +31,7 @@ class BesApplicationTest {
 		final IModule module = (b) -> {
 			b.bind(Startable.class).to((cf) -> startable);
 		};
-		final IComponentFactory cf = Tests.newCf(module);
+		final IComponentFactory cf = Tests.newCf(module, false);
 		assertNotNull(cf);
 		assertNotNull(cf.requireInstance(FlywayDbInitializer.class));
 		assertSame(startable, cf.getInstance(Startable.class));

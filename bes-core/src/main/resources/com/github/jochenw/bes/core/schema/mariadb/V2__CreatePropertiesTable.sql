@@ -10,7 +10,6 @@ CREATE TABLE IF NOT EXISTS PropertySets (
   digest BINARY(32) NOT NULL,
   INDEX I_PropertySets_Digest (digest)
 );
-CREATE Sequence IF NOT EXISTS PropertiesSeq AS BIGINT;
 CREATE TABLE IF NOT EXISTS Properties (
   setId BIGINT NOT NULL,
   pKey VARCHAR(128) NOT NULL,

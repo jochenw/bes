@@ -1,25 +1,18 @@
 package com.github.jochenw.bes.core.impl;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.sql.Connection;
 import java.util.List;
 import java.util.function.Consumer;
 
-import javax.sql.DataSource;
-
 import org.jspecify.annotations.NonNull;
-import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import com.github.jochenw.afw.core.function.Functions;
-import com.github.jochenw.afw.core.function.Functions.FailableConsumer;
-import com.github.jochenw.afw.core.jdbc.JdbcHelper;
 import com.github.jochenw.afw.core.util.Objects;
 import com.github.jochenw.afw.di.api.IComponentFactory;
 import com.github.jochenw.bes.core.api.IBesModel;
@@ -31,29 +24,12 @@ class DefaultBesUserControllerTest {
 	
 	@BeforeAll
 	static void initCf() {
-		FlywayDbInitializer.SKIPPING = true;
-		CF = Tests.newCf();
-		FlywayDbInitializer.SKIPPING = false;
+		CF = Tests.newCf(true);
 	}
-
-	private DataSource adminDataSource;
 
 	@BeforeEach
 	void initDb() throws Exception {
-		adminDataSource = CF.getInstance(DataSource.class, "admin");
-		Assumptions.assumeTrue(adminDataSource != null);
-		final Path path = Paths.get("src/main/resources/com/github/jochenw/bes/core/schema/mariadb/v0__CreateDatabase.sql");
-		assertTrue(Files.isRegularFile(path));
-		try (Connection connection = adminDataSource.getConnection()) {
-			final JdbcHelper jh = CF.requireInstance(JdbcHelper.class);
-			final FailableConsumer<String,?> statementExecutor = (s) -> {
-				System.out.println("Admin SQL Statement: " + s);
-				jh.query(connection, s).run();
-			};
-			Functions.accept(statementExecutor, "DROP DATABASE IF EXISTS bes");
-			jh.read(path, statementExecutor);
-		}
-		CF.requireInstance(FlywayDbInitializer.class).run();
+		Tests.initDb(CF);
 	}
 
 	protected @NonNull IBesUserController getUserController() {
@@ -75,6 +51,25 @@ class DefaultBesUserControllerTest {
 		assertUser(users1.get(0), 1, "jwi", "joe@somecompany.com", "Wiedmann, Jochen");
 		assertUser(users1.get(1), 2, "jodoe", "john.doe@somecompany.com", "Doe, John");
 		assertUser(users1.get(2), 3, "jadoe", "jane.doe@somecompany.com", "Doe, Jane");
+	}
+
+	@Test
+	void testUniqueIndexes() {
+		testCreateUsers();
+		try {
+			createUser("jodoe", "jonathan.doe@somecompany.com", "Doe, Jonathan");
+			fail("Expected Exception");
+		} catch (DuplicateKeyException dke) {
+			assertEquals("userId", dke.getAttribute());
+			assertEquals("jodoe", dke.getValue());
+		}
+		try {
+			createUser("johndoe", "john.doe@somecompany.com", "Doe, John");
+			fail("Expected Exception");
+		} catch (DuplicateKeyException dke) {
+			assertEquals("email", dke.getAttribute());
+			assertEquals("john.doe@somecompany.com", dke.getValue());
+		}
 	}
 
 	@Test

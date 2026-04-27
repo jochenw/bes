@@ -1,12 +1,17 @@
 package com.github.jochenw.bes.core.impl;
 
+import java.lang.reflect.UndeclaredThrowableException;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.SQLIntegrityConstraintViolationException;
 import java.util.function.Consumer;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import com.github.jochenw.afw.core.util.Exceptions;
 import com.github.jochenw.afw.core.util.Objects;
+import com.github.jochenw.afw.core.util.Objects.DuplicateElementException;
 import com.github.jochenw.bes.core.api.IBesModel.IBesUserController;
 import com.github.jochenw.bes.core.model.BesUser;
 import com.github.jochenw.bes.core.model.BesUser.Id;
@@ -126,6 +131,25 @@ public class DefaultBesUserController extends AbstractBesObjectController<BesUse
 				getJdbcHelper().query(conn, sql,
 						              newId.getIdObj(),
 						              result.getUserId(), result.getEmail(), result.getName()).run();
+			} catch (UndeclaredThrowableException ute) {
+				final Throwable cause = ute.getCause();
+				if (cause != null  &&  cause instanceof SQLIntegrityConstraintViolationException) {
+					final SQLIntegrityConstraintViolationException sicve = (SQLIntegrityConstraintViolationException) cause;
+					if (sicve.getErrorCode() == 1062) {
+						final Pattern pattern = Pattern.compile("Duplicate entry \\'([^\\']*)\\' for key \\'([^\\']*)\\'");
+						final Matcher matcher = pattern.matcher(sicve.getMessage());
+						if (matcher.find()) {
+							final String duplicateValue = matcher.group(1);
+							final String uniqueIndex = matcher.group(2);
+							if ("U_Users_UserId".equals(uniqueIndex)) {
+								throw new DuplicateKeyException("userId", pObject.getUserId(), "Duplicate value '" + duplicateValue + "' for User.userId");
+							} else if ("U_Users_Email".equals(uniqueIndex)) {
+								throw new DuplicateKeyException("email", pObject.getEmail(), "Duplicate value '" + duplicateValue + "' for User.email");
+							}
+						}
+					}
+				}
+				throw ute;
 			} catch (Exception e) {
 				throw Exceptions.show(e);
 			}

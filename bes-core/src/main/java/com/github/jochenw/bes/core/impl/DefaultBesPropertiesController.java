@@ -23,9 +23,9 @@ import com.github.jochenw.bes.core.model.BesPropertySet.Id;
 
 
 public class DefaultBesPropertiesController extends AbstractBesObjectController<BesPropertySet.Id,BesPropertySet> implements IBesPropertiesController {
-	private static final String TABLE = "BesPropertySets";
+	private static final String TABLE = "PropertySets";
 	private static final String FIELDS = "id, digest";
-	private static final String TABLE2 = "BesProperties";
+	private static final String TABLE2 = "Properties";
 	private static final String FIELDS2 = "setId, pKey, pValue";
 
 	@Override
@@ -74,7 +74,7 @@ public class DefaultBesPropertiesController extends AbstractBesObjectController<
 				if (map.put(id, bps) != null) {
 					throw new IllegalStateException("Duplicate property set id: " + id);
 				}
-				if (id > 0) {
+				if (i > 0) {
 					sb.append(", ");
 				}
 				sb.append(id);
@@ -138,15 +138,21 @@ public class DefaultBesPropertiesController extends AbstractBesObjectController<
 	@Override
 	public BesPropertySet insert(BesPropertySet pBps) {
 		final BesPropertySet existing = findExisting(pBps);
-		if (existing == null) {
+		if (existing != null) {
 			return existing;
 		}
 		
 		final Long setIdObj = newId("PropertySetsSeq");
 		final BesPropertySet.Id setId = BesPropertySet.Id.of(setIdObj);
+		return insert(pBps, setId);
+	}
+
+	private BesPropertySet insert(BesPropertySet pBps, final BesPropertySet.Id pSetId) {
+		final Long setIdObj = pSetId.getIdObj();
+		final byte[] digest = BesPropertySet.getDigest(pBps);
 		try (Connection conn = newConnection()) {
 			final String sql = "INSERT INTO " + TABLE + " (" + FIELDS + ") VALUES (?, ?)";
-			getJdbcHelper().query(conn, sql, setId.getIdObj(), pBps.getDigest()).run();
+			getJdbcHelper().query(conn, sql, pSetId.getIdObj(), digest).run();
 			final String sql2 = "INSERT INTO " + TABLE2 + " (" + FIELDS2 + ") VALUES (?, ?, ?)";
 			try (PreparedStatement stmt = conn.prepareStatement(sql2)) {
 				pBps.forEach((k,v) -> {
@@ -160,14 +166,12 @@ public class DefaultBesPropertiesController extends AbstractBesObjectController<
 					}
 				});
 			}
-			final BesPropertySet bps = new BesPropertySet(setId);
-			bps.getPropertyMap().putAll(pBps.getPropertyMap());
+			final BesPropertySet bps = new BesPropertySet(pSetId);
+			bps.getModifiablePropertyMap().putAll(pBps.getPropertyMap());
 			return bps;
 		} catch (SQLException se) {
 			throw Exceptions.show(se);
 		}
-		
-			
 	}
 
 	@Override
@@ -181,7 +185,7 @@ public class DefaultBesPropertiesController extends AbstractBesObjectController<
 		} else {
 			final BesPropertySet bps = new BesPropertySet(BesPropertySet.Id.noId());
 			bps.getPropertyMap().putAll(pBps.getPropertyMap());
-			return insert(pBps);
+			return insert(pBps, bps.getId());
 		}
 	}
 
@@ -240,17 +244,19 @@ public class DefaultBesPropertiesController extends AbstractBesObjectController<
 
 	@Override
 	public BesPropertySet insert(Properties pProperties) {
-		final BesPropertySet bps = asBesPropertySet(BesPropertySet.Id.noId(), pProperties);
-		return insert(bps);
+		final Long setIdObj = newId("PropertySetsSeq");
+		final BesPropertySet.Id setId = BesPropertySet.Id.of(setIdObj);
+		final BesPropertySet bps = asBesPropertySet(setId, pProperties, true);
+		return insert(bps, setId);
 	}
 
-	private BesPropertySet asBesPropertySet(BesPropertySet.Id pSetId, Properties pProperties) {
+	private BesPropertySet asBesPropertySet(BesPropertySet.Id pSetId, Properties pProperties, boolean pNullIdValid) {
 		final BesPropertySet bps = new BesPropertySet(pSetId);
-		final Map<String, BesProperty> map = bps.getPropertyMap();
+		final Map<String, BesProperty> map = bps.getModifiablePropertyMap();
 		pProperties.forEach((k,v) -> {
 			final String key = (String) k;
 			final String value = (String) v;
-			map.put(key, new BesProperty(pSetId, key, value));
+			map.put(key, BesProperty.of(pSetId, pNullIdValid, key, value));
 		});
 		return bps;
 	}
@@ -258,6 +264,6 @@ public class DefaultBesPropertiesController extends AbstractBesObjectController<
 	@Override
 	public BesPropertySet update(BesPropertySet pPropertySet, Properties pProperties) {
 		final BesPropertySet.Id id = pPropertySet.getId();
-		return update(asBesPropertySet(id, pProperties));
+		return update(asBesPropertySet(id, pProperties, false));
 	}
 }
