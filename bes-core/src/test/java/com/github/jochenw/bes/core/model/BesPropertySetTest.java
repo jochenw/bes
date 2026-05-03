@@ -7,10 +7,12 @@ import org.junit.jupiter.api.Test;
 class BesPropertySetTest {
 	@Test
 	void testCreatePropertySet() {
-		final BesPropertySet bps = newPropertySet(1l, "propA", "Some Property value",
-				                                  "propB", "Another Property value",
-				                                  "foo", "bar");
+		final BesPropertySet bps = newBasicPropertySet();
 		// Validate contents
+		assertBasicPropertySet(bps);
+	}
+
+	private void assertBasicPropertySet(final BesPropertySet bps) {
 		assertEquals(3, bps.getPropertyMap().size());
 		assertEquals("Some Property value", bps.getProperty("propA"));
 		assertEquals("Another Property value", bps.getProperty("propB"));
@@ -18,11 +20,16 @@ class BesPropertySetTest {
 		assertNull(bps.getProperty("PropA"));
 	}
 
+	private BesPropertySet newBasicPropertySet() {
+		final BesPropertySet bps = newPropertySet(1l, "propA", "Some Property value",
+				                                  "propB", "Another Property value",
+				                                  "foo", "bar");
+		return bps;
+	}
+
 	@Test
 	void testDigest() {
-		final BesPropertySet bps0 = newPropertySet(1l, "propA", "Some Property value",
-                "propB", "Another Property value",
-                "foo", "bar");
+		final BesPropertySet bps0 = newBasicPropertySet();
 		final byte[] digest0 = BesPropertySet.getDigest(bps0);
 		// Same properties, different order, should produce the same digest.
 		final BesPropertySet bps1 = newPropertySet(2l, "propA", "Some Property value",

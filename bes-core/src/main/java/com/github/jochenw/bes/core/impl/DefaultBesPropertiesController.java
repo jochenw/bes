@@ -167,7 +167,11 @@ public class DefaultBesPropertiesController extends AbstractBesObjectController<
 				});
 			}
 			final BesPropertySet bps = new BesPropertySet(pSetId);
-			bps.getModifiablePropertyMap().putAll(pBps.getPropertyMap());
+			final Map<String, BesProperty> propertyMap = bps.getModifiablePropertyMap();
+			pBps.getPropertyMap().forEach((k, p) -> {
+				final String value = p.getValue();
+				propertyMap.put(k, BesProperty.of(pSetId, false, k, value));
+			});
 			return bps;
 		} catch (SQLException se) {
 			throw Exceptions.show(se);
@@ -183,9 +187,10 @@ public class DefaultBesPropertiesController extends AbstractBesObjectController<
 		if (BesPropertySet.same(existing, pBps)) {
 			return pBps;
 		} else {
-			final BesPropertySet bps = new BesPropertySet(BesPropertySet.Id.noId());
-			bps.getPropertyMap().putAll(pBps.getPropertyMap());
-			return insert(pBps, bps.getId());
+			final BesPropertySet.Id id = BesPropertySet.Id.of(newId("PropertySetsSeq"));
+			final BesPropertySet bps = new BesPropertySet(id);
+			bps.getModifiablePropertyMap().putAll(pBps.getPropertyMap());
+			return insert(bps, id);
 		}
 	}
 

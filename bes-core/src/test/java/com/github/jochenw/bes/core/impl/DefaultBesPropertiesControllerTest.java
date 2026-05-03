@@ -2,6 +2,7 @@ package com.github.jochenw.bes.core.impl;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -38,14 +39,32 @@ class DefaultBesPropertiesControllerTest {
 
 	@Test
 	void testCreate() {
-		final Properties props = new Properties();
-		props.put("foo", "bar");
-		props.put("answer", "42");
-		props.put("whatever", "works");
+		final Properties props = newBasicPropertySet();
 		final IBesPropertiesController pc = getPropertiesController();
 		final BesPropertySet bps = pc.insert(props);
 		assertEquals(1l, bps.getId().getId());
 		assertPropertySet(bps, BesPropertySet.Id.of(1l), props);
+	}
+
+	private Properties newBasicPropertySet() {
+		final Properties props = new Properties();
+		props.put("foo", "bar");
+		props.put("answer", "42");
+		props.put("whatever", "works");
+		return props;
+	}
+
+	@Test
+	void testUpdate() {
+		final Properties props = newBasicPropertySet();
+		final IBesPropertiesController pc = getPropertiesController();
+		final BesPropertySet bps = pc.insert(props);
+		final Properties props2 = new Properties();
+		props2.putAll(props);
+		props2.put("never", "bw");
+		final BesPropertySet bps2 = pc.update(bps, props2);
+		assertNotEquals(bps2.getId().getId(), bps.getId().getId());
+		assertPropertySet(bps2, bps2.getId(), props2);
 	}
 
 	protected void assertPropertySet(BesPropertySet pBps, BesPropertySet.Id pId, Properties pProperties) {
